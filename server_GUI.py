@@ -1,0 +1,131 @@
+from tkinter import *
+import socket
+import threading
+
+host = ""
+port = ""
+buffer_size = 1024
+client_dict = {}
+
+while host == "":
+    host = input("IP >> ")
+    if host == "":
+        print("Invalid")
+
+while port == "":
+    port = int(input("Port >> "))
+    if str(port) == "":
+        print("Invalid")
+
+root = Tk()
+root.title("Client")
+root.geometry("600x650")
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+s.bind((host, port))
+s.listen(5)
+
+def addtotext(widget, text):
+    #  Adds a line to a text widget, makes it un-editable and then scrolls to the bottom
+    widget.configure(state="normal")
+    widget.insert("end", "\n{}".format(text))
+    widget.configure(state="disabled")
+    widget.see(END)
+
+def send():
+    message = msg_entry.get().encode("utf-8")
+    if message != "":
+        addtotext(message_area, "You: {}".format(message.decode("utf-8")))
+        out_msg = "SERVER: {}".format(message.decode("utf-8"))
+        for c in client_dict.keys():  # For each client
+            c.send(str.encode(out_msg))  # Send the message
+    msg_entry.delete(0, "end")
+
+# def kick():
+#     name_map = {v: k for k, v in client_dict.items()}
+#     user = kick_entry.get()
+#     client_to_kick = name_map[user]
+#     client_to_kick.disconnect()
+
+def handler(client, addr):
+    nickname_done = False  # Nickname set = False
+    ip_port = "{}:{}".format(addr[0], addr[1])  # Looks like "127.0.0.1:1234"
+    while True:
+        try:
+            r_msg = client.recv(buffer_size)  # Recieve message
+
+            if r_msg:  # If there is text
+                if nickname_done == False:  # If nickname not set
+                    nick_msg = r_msg.decode("utf-8")  # Decode it
+                    nick_splt = nick_msg.split(" ")  # Split it
+                    client_dict[client] = " ".join(nick_splt[1:])  # Add to dict
+                    addtotext(message_area, "{} set nick to {}".format(ip_port, client_dict[client]))
+                    nickname_done = True  # Nick has been set
+                    out_msg = "{} joined".format(client_dict[client])  # Tell all clients
+
+                else:  # If nick already set
+                    # r_msg decoded so a) it will print and b) it wont get double encoded
+                    addtotext(message_area, "{}: {}".format(client_dict[client], r_msg.decode("utf-8")))
+                    out_msg = "{}: {}".format(client_dict[client], r_msg.decode("utf-8"))
+
+                for c in client_dict.keys():  # For each client
+                    if c != client:  # If it is not the one that sent the msg
+                        c.send(str.encode(out_msg))  # Sent the message
+
+        except ConnectionResetError:
+            out_msg = "Client {} ({}) dropped".format(client_dict[client], ip_port)
+            addtotext(message_area, out_msg)
+            client_dict.pop(client)  # Remove client from dict
+            for c in client_dict.keys():  # For each client
+                if c != client:  # If it is not the one that sent the msg
+                    c.send(str.encode(out_msg))  # Sent the message
+            break  # End process
+
+def client_checking():
+    while True:
+        client,addr = s.accept()
+        addtotext(message_area, "Accepted connection from: {}:{}".format(addr[0], addr[1]))
+        client_handler = threading.Thread(target=handler,args=(client,addr))
+        client_handler.daemon = True
+        client_handler.start()
+
+def main():
+    client_checking_thrd = threading.Thread(target=client_checking)
+    client_checking_thrd.daemon = True
+    client_checking_thrd.start()
+    root.mainloop()
+
+
+#  create a Frame for the Text and Scrollbar
+txt_frm = Frame(root, width=600, height=600)
+txt_frm.grid(row=0)
+#  ensure a consistent GUI size
+txt_frm.grid_propagate(False)
+#  implement stretchability
+txt_frm.grid_rowconfigure(0, weight=1)
+txt_frm.grid_columnconfigure(0, weight=1)
+#  create a Text widget
+message_area = Text(txt_frm, borderwidth=3, relief="sunken", state="disabled")
+message_area.config(font=("consolas", 12), undo=True, wrap='word')
+message_area.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+#  create a Scrollbar and associate it with txt
+scrollb = Scrollbar(txt_frm, command=message_area.yview)
+scrollb.grid(row=0, column=1, sticky='nsew')
+message_area['yscrollcommand'] = scrollb.set
+
+msg_entry = Entry(root, width=20)
+msg_entry.grid(row=2)
+
+btn_send = Button(root, text="Send", command=send, width=20)
+btn_send.grid(row=3)
+
+# kick_entry = Entry(root, width=20)
+# kick_entry.grid(row=4)
+#
+# btn_kick = Button(root, text="Send", command=kick, width=20)
+# btn_kick.grid(row=5)
+
+if __name__ == '__main__':
+    main()
+    quit()
