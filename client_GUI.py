@@ -24,19 +24,31 @@ while nick == "":
 
 root = Tk()
 root.title("Client")
-root.geometry("600x650")
+root.geometry("640x650")
 
-def addtotext(widget, text):
+def addtotext(widget, text, self_message=False, important=False):
+    tag = ""
+
+    message_area.tag_configure("connection", foreground="red")
+    message_area.tag_configure("self_message", foreground="blue")
+
+    if self_message == True:
+        tag = "self_message"
+    elif important == True:
+        tag = "connection"
+    else:
+        tag = ""
+
     #  Adds a line to a text widget, makes it un-editable and then scrolls to the bottom
     widget.configure(state="normal")
-    widget.insert("end", "\n{}".format(text))
+    widget.insert("end", "\n{}".format(text), tag)
     widget.configure(state="disabled")
     widget.see(END)
 
 def send():
     message = msg_entry.get().encode("utf-8")
     if message != "":
-        addtotext(message_area, "You: {}".format(message.decode("utf-8")))
+        addtotext(message_area, "You: {}".format(message.decode("utf-8")), True)
         s.send(message)
     msg_entry.delete(0, "end")
 
@@ -45,9 +57,15 @@ def msg_handler():
         try:
             data = s.recv(buffer_size)
             if data:
-                addtotext(message_area, "{}".format(data.decode("utf-8")))
+                if data.decode("utf-8") == "YOU HAVE BEEN KICKED BY THE SERVER":
+                    s.close()
+                    addtotext(message_area, "You have been kicked", False, True)
+                    raise ConnectionResetError
+                else:
+                    addtotext(message_area, "{}".format(data.decode("utf-8")))
+
         except ConnectionResetError:
-            addtotext(message_area, "Connection to server lost")
+            addtotext(message_area, "Connection to server lost", False, True)
             break
 
 def main():
@@ -84,5 +102,7 @@ btn_send.grid(row=3)
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
+    addtotext(message_area, "Connected to server", False, True)
     s.send("NICK {}".format(nick).encode("utf-8"))
+    addtotext(message_area, "Name sent", False, True)
     main()
