@@ -58,13 +58,13 @@ def msg_handler():
             data = s.recv(buffer_size)
             if data:
                 if data.decode("utf-8") == "YOU HAVE BEEN KICKED BY THE SERVER":
-                    s.close()
-                    addtotext(message_area, "You have been kicked", False, True)
+                    addtotext(message_area, "You have been kicked by the server", False, True)
                     raise ConnectionResetError
                 else:
                     addtotext(message_area, "{}".format(data.decode("utf-8")))
 
         except ConnectionResetError:
+            s.close()
             addtotext(message_area, "Connection to server lost", False, True)
             break
 

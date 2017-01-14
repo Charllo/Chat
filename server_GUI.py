@@ -8,7 +8,6 @@ host = ""
 port = ""
 buffer_size = 1024
 client_dict = {}
-kick_dict = {}
 
 while host == "":
     host = input("IP >> ")
@@ -48,7 +47,7 @@ def addtotext(widget, text, self_message=False, connection_flag=False):
     widget.configure(state="disabled")
     widget.see(END)
 
-def send(input_message="", kicked_client=""):
+def send_message(input_message="", kicked_client=""):
     if input_message != "" and kicked_client != "":
         kicked_client.send(str.encode(input_message))  # Send the message
 
@@ -60,14 +59,19 @@ def send(input_message="", kicked_client=""):
             c.send(str.encode(out_msg))  # Send the message
         msg_entry.delete(0, "end")
 
+def send_all(in_client, out_message):
+    for c in client_dict.keys():  # For each client
+        if c != in_client:  # If it is not the one that sent the msg
+            c.send(str.encode(out_message))  # Sent the message
+
 def kick():
     name_map = {v: k for k, v in client_dict.items()}
     user = kick_entry.get()
     kick_entry.delete(0, "end")
     client_to_kick = name_map[user]
-    send("YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
+    send_message("YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
     addtotext(message_area, "{} kicked from server".format(user), False, True)
-    kick_dict[user] = "kicked"
+    send_all("", "{} kicked from server".format(user))
 
 def handler(client, addr):
     nickname_done = False  # Nickname set = False
@@ -85,26 +89,18 @@ def handler(client, addr):
                     nickname_done = True  # Nick has been set
                     out_msg = "{} joined".format(client_dict[client])  # Tell all clients
 
-                elif client_dict[client] in kick_dict.keys():
-                    raise ConnectionResetError
-
                 else:  # If nick already set
                     # r_msg decoded so a) it will print and b) it wont get double encoded
                     addtotext(message_area, "{}: {}".format(client_dict[client], r_msg.decode("utf-8")))
                     out_msg = "{}: {}".format(client_dict[client], r_msg.decode("utf-8"))
 
-                for c in client_dict.keys():  # For each client
-                    if c != client:  # If it is not the one that sent the msg
-                        c.send(str.encode(out_msg))  # Sent the message
+                send_all(client, out_msg)
 
-        except ConnectionResetError:
+        except (ConnectionResetError, ConnectionAbortedError):
             out_msg = "Client {} ({}) dropped".format(client_dict[client], ip_port)
             addtotext(message_area, out_msg, False, True)
-            kick_dict.pop(client_dict[client])
             client_dict.pop(client)  # Remove client from dict
-            for c in client_dict.keys():  # For each client
-                if c != client:  # If it is not the one that sent the msg
-                    c.send(str.encode(out_msg))  # Sent the message
+            send_all(client, out_msg)
             break  # End process
 
 def client_checking():
@@ -143,7 +139,7 @@ message_area['yscrollcommand'] = scrollb.set
 msg_entry = Entry(root, width=20)
 msg_entry.grid(row=2)
 
-btn_send = Button(root, text="Send", command=send, width=20)
+btn_send = Button(root, text="Send", command=send_message, width=20)
 btn_send.grid(row=3)
 
 kick_entry = Entry(root, width=20)
