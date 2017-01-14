@@ -16,3 +16,7 @@
  + Press enter or the send button to send message
 
 ---
+
+The files in CLI are command line versions (not tested completely, unstable)
+
+---
