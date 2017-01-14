@@ -100,11 +100,19 @@ btn_send.grid(row=2, column=1, sticky="W")
 
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-    addtotext(message_area, "Connected to server", False, True)
-    s.send("NICK {}".format(nick).encode("utf-8"))
-    addtotext(message_area, "Name sent", False, True)
-    main()
-    # Once all loops are broken
-    root.destroy()
-    quit()
+    try:
+        s.connect((host, port))
+    except OSError:
+        addtotext(message_area, "Socket attempted to connect to an unreachable network", False, True)
+        root.mainloop()
+    except ConnectionRefusedError:
+        addtotext(message_area, "No connection could be made", False, True)
+        root.mainloop()
+    else:
+        addtotext(message_area, "Connected to server", False, True)
+        s.send("NICK {}".format(nick).encode("utf-8"))
+        addtotext(message_area, "Name sent", False, True)
+        main()
+        # Once all loops are broken
+        root.destroy()
+        quit()

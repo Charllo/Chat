@@ -153,5 +153,8 @@ btn_kick.grid(row=3, column=1, sticky="W")
 if __name__ == '__main__':
     main()
     # Once all loops are broken
-    root.destroy()
+    try:
+        root.destroy()
+    except _tkinter.TclError:
+        pass  # Root already destroyed
     quit()
