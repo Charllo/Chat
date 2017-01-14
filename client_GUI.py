@@ -7,20 +7,26 @@ port = ""
 nick = ""
 buffer_size = 1024
 
+# - - - Input + Input checking - - - #
 while host == "":
-    host = input("IP >> ")
+    host = input("IP   >> ")
     if host == "":
         print("Invalid")
 
 while port == "":
-    port = int(input("Port >> "))
-    if str(port) == "":
+    try:
+        port = int(input("Port >> "))
+    except ValueError:
         print("Invalid")
+    else:
+        if str(port) == "":
+            print("Invalid")
 
 while nick == "":
     nick = input("Name >> ")
     if nick == "":
         print("Invalid")
+# - - - - - - - - - - - - - - - - - - #
 
 root = Tk()
 root.title("Client")
@@ -57,15 +63,19 @@ def msg_handler():
         try:
             data = s.recv(buffer_size)
             if data:
-                if data.decode("utf-8") == "YOU HAVE BEEN KICKED BY THE SERVER":
-                    addtotext(message_area, "You have been kicked by the server", False, True)
+                decoded = data.decode("utf-8")
+                split = decoded.split(" ")
+                if decoded == "[Server Message] YOU HAVE BEEN KICKED BY THE SERVER":
+                    addtotext(message_area, "[Client] You have been kicked by the server", important=True)
                     raise ConnectionResetError
+                elif str(split[0])+str(split[1]) == "[ServerMessage]":
+                    addtotext(message_area, str(decoded), important=True)
                 else:
-                    addtotext(message_area, "{}".format(data.decode("utf-8")))
+                    addtotext(message_area, str(decoded))
 
         except ConnectionResetError:
             s.close()
-            addtotext(message_area, "Connection to server lost", False, True)
+            addtotext(message_area, "[Client] Connection to server lost", important=True)
             break
 
 def main():
@@ -103,16 +113,19 @@ if __name__ == '__main__':
     try:
         s.connect((host, port))
     except OSError:
-        addtotext(message_area, "Socket attempted to connect to an unreachable network", False, True)
+        addtotext(message_area, "[Client] Socket attempted to connect to an unreachable network", important=True)
         root.mainloop()
     except ConnectionRefusedError:
-        addtotext(message_area, "No connection could be made", False, True)
+        addtotext(message_area, "[Client] No connection could be made", important=True)
         root.mainloop()
     else:
-        addtotext(message_area, "Connected to server", False, True)
+        addtotext(message_area, "[Client] Connected to server", important=True)
         s.send("NICK {}".format(nick).encode("utf-8"))
-        addtotext(message_area, "Name sent", False, True)
+        addtotext(message_area, "[Client] Name sent", important=True)
         main()
         # Once all loops are broken
-        root.destroy()
+        try:
+            root.destroy()
+        except TclError:
+            pass  # Root already destroyed
         quit()

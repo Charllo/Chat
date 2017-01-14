@@ -2,41 +2,52 @@ from tkinter import *
 import socket
 import threading
 
-# Working and tested on windows
-
-host = "localhost"
+host = ""
 port = ""
 buffer_size = 1024
 client_dict = {}
 
 while port == "":
-    port = int(input("Port >> "))
-    if str(port) == "":
+    try:
+        port = int(input("Port >> "))
+    except ValueError:
         print("Invalid")
+    else:
+        if str(port) == "":
+            print("Invalid")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.bind((host, port))
-s.listen(5)
+host = socket.gethostbyname(socket.gethostname())
+if host == "127.0.0.1":
+    host = socket.gethostbyname(socket.getfqdn())
 
-local_ip = socket.gethostbyname(socket.gethostname())
-if local_ip == "127.0.0.1":
-    local_ip = socket.gethostbyname(socket.getfqdn())
+try:
+    s.bind((host, port))
+except OverflowError:
+    print("\nPort must be 0-65535")
+    input("\nPress enter to quit")
+    quit()
+
+s.listen()
 
 root = Tk()
-root.title("Server | {} - {}:{}".format(host, local_ip, port))
+root.title("Server | {}:{}".format(host, port))
 root.geometry("600x650")
 
-def addtotext(widget, text, self_message=False, connection_flag=False):
+def addtotext(widget, text, self_message=False, connection_flag=False, config_message=False):
     tag = ""
 
-    message_area.tag_configure("connection", foreground="red")
     message_area.tag_configure("self_message", foreground="blue")
+    message_area.tag_configure("connection", foreground="red")
+    message_area.tag_configure("server_config", foreground="purple")
 
     if connection_flag == True:
         tag = "connection"
     elif self_message == True:
         tag = "self_message"
+    elif config_message == True:
+        tag = "server_config"
     else:
         tag = ""
 
@@ -53,7 +64,7 @@ def send_message(input_message="", kicked_client=""):
     else:
         message = msg_entry.get().encode("utf-8")
         addtotext(message_area, "You: {}".format(message.decode("utf-8")), True)
-        out_msg = "SERVER: {}".format(message.decode("utf-8"))
+        out_msg = "Server-user: {}".format(message.decode("utf-8"))
         for c in client_dict.keys():  # For each client
             c.send(str.encode(out_msg))  # Send the message
         msg_entry.delete(0, "end")
@@ -69,11 +80,12 @@ def kick():
     kick_entry.delete(0, "end")
     try:
         client_to_kick = name_map[user]
-        send_message("YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
-        addtotext(message_area, "{} kicked from server".format(user), False, True)
-        send_all("", "{} kicked from server".format(user))
+        send_message("[Server Message] YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
+        kick_msg = "[Server Message] {} kicked from server".format(user)
+        addtotext(message_area, kick_msg, connection_flag=True)
+        send_all("", kick_msg)
     except KeyError:
-        addtotext(message_area, "Kick message: {} not recognized".format(user), False, True)
+        addtotext(message_area, "[Kick message] {} not recognized".format(user), connection_flag=True)
 
 def handler(client, addr):
     nickname_done = False  # Nickname set = False
@@ -87,9 +99,9 @@ def handler(client, addr):
                     nick_msg = r_msg.decode("utf-8")  # Decode it
                     nick_splt = nick_msg.split(" ")  # Split it
                     client_dict[client] = " ".join(nick_splt[1:])  # Add to dict
-                    addtotext(message_area, "{} set nick to {}".format(ip_port, client_dict[client]), False, True)
+                    addtotext(message_area, "[Server Message] {} set nick to {}".format(ip_port, client_dict[client]), connection_flag=True)
                     nickname_done = True  # Nick has been set
-                    out_msg = "{} joined".format(client_dict[client])  # Tell all clients
+                    out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
 
                 else:  # If nick already set
                     # r_msg decoded so a) it will print and b) it wont get double encoded
@@ -99,16 +111,17 @@ def handler(client, addr):
                 send_all(client, out_msg)
 
         except (ConnectionResetError, ConnectionAbortedError):
-            out_msg = "Client {} ({}) dropped".format(client_dict[client], ip_port)
-            addtotext(message_area, out_msg, False, True)
+            drop_msg = "[Server Message] Client {} ({}) dropped".format(client_dict[client], ip_port)
+            addtotext(message_area, drop_msg, connection_flag=True)
             client_dict.pop(client)  # Remove client from dict
-            send_all(client, out_msg)
+            send_all(client, drop_msg)
+            client.close()
             break  # End process
 
 def client_checking():
     while True:
         client,addr = s.accept()
-        addtotext(message_area, "Accepted connection from: {}:{}".format(addr[0], addr[1]), False, True)
+        addtotext(message_area, "[Server Message] Accepted connection from: {}:{}".format(addr[0], addr[1]), connection_flag=True)
         client_handler = threading.Thread(target=handler,args=(client,addr))
         client_handler.daemon = True
         client_handler.start()
@@ -117,7 +130,7 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "Server started on {} - {}:{}".format(host, local_ip, port), False, True)
+    addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
     root.mainloop()
 
 #  create a Frame for the Text and Scrollbar
@@ -155,6 +168,6 @@ if __name__ == '__main__':
     # Once all loops are broken
     try:
         root.destroy()
-    except _tkinter.TclError:
+    except TclError:
         pass  # Root already destroyed
     quit()

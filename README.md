@@ -12,4 +12,7 @@
    - Input the server IP
    - Input the server Port
    - Input the name which you want other people to see when you send a message
+
  + Press enter or the send button to send message
+
+---
