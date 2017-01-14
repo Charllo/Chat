@@ -24,7 +24,7 @@ while nick == "":
 
 root = Tk()
 root.title("Client")
-root.geometry("640x650")
+root.geometry("600x650")
 
 def addtotext(widget, text, self_message=False, important=False):
     tag = ""
@@ -74,10 +74,9 @@ def main():
     message_handler.start()
     root.mainloop()
 
-
 #  create a Frame for the Text and Scrollbar
 txt_frm = Frame(root, width=600, height=600)
-txt_frm.grid(row=0)
+txt_frm.grid(row=0, columnspan=2)
 #  ensure a consistent GUI size
 txt_frm.grid_propagate(False)
 #  implement stretchability
@@ -93,11 +92,11 @@ scrollb.grid(row=0, column=1, sticky='nsew')
 message_area['yscrollcommand'] = scrollb.set
 
 msg_entry = Entry(root, width=20)
-msg_entry.grid(row=2)
+msg_entry.grid(row=2, sticky="E")
 
+root.bind("<Return>", lambda event: send())  # Bind return to send msg
 btn_send = Button(root, text="Send", command=send, width=20)
-btn_send.grid(row=3)
-
+btn_send.grid(row=2, column=1, sticky="W")
 
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -106,3 +105,6 @@ if __name__ == '__main__':
     s.send("NICK {}".format(nick).encode("utf-8"))
     addtotext(message_area, "Name sent", False, True)
     main()
+    # Once all loops are broken
+    root.destroy()
+    quit()

@@ -2,31 +2,30 @@ from tkinter import *
 import socket
 import threading
 
-# Kicking a client is a bit buggy
+# Working and tested on windows
 
-host = ""
+host = "localhost"
 port = ""
 buffer_size = 1024
 client_dict = {}
-
-while host == "":
-    host = input("IP >> ")
-    if host == "":
-        print("Invalid")
 
 while port == "":
     port = int(input("Port >> "))
     if str(port) == "":
         print("Invalid")
 
-root = Tk()
-root.title("Server")
-root.geometry("600x650")
-
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 s.bind((host, port))
 s.listen(5)
+
+local_ip = socket.gethostbyname(socket.gethostname())
+if local_ip == "127.0.0.1":
+    local_ip = socket.gethostbyname(socket.getfqdn())
+
+root = Tk()
+root.title("Server | {} - {}:{}".format(host, local_ip, port))
+root.geometry("600x650")
 
 def addtotext(widget, text, self_message=False, connection_flag=False):
     tag = ""
@@ -68,10 +67,13 @@ def kick():
     name_map = {v: k for k, v in client_dict.items()}
     user = kick_entry.get()
     kick_entry.delete(0, "end")
-    client_to_kick = name_map[user]
-    send_message("YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
-    addtotext(message_area, "{} kicked from server".format(user), False, True)
-    send_all("", "{} kicked from server".format(user))
+    try:
+        client_to_kick = name_map[user]
+        send_message("YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
+        addtotext(message_area, "{} kicked from server".format(user), False, True)
+        send_all("", "{} kicked from server".format(user))
+    except KeyError:
+        addtotext(message_area, "Kick message: {} not recognized".format(user), False, True)
 
 def handler(client, addr):
     nickname_done = False  # Nickname set = False
@@ -115,13 +117,12 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "Server started", False, True)
+    addtotext(message_area, "Server started on {} - {}:{}".format(host, local_ip, port), False, True)
     root.mainloop()
-
 
 #  create a Frame for the Text and Scrollbar
 txt_frm = Frame(root, width=600, height=600)
-txt_frm.grid(row=0)
+txt_frm.grid(row=0, columnspan=2)
 #  ensure a consistent GUI size
 txt_frm.grid_propagate(False)
 #  implement stretchability
@@ -133,21 +134,24 @@ message_area.config(font=("consolas", 12), undo=True, wrap='word')
 message_area.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 #  create a Scrollbar and associate it with txt
 scrollb = Scrollbar(txt_frm, command=message_area.yview)
-scrollb.grid(row=0, column=1, sticky='nsew')
-message_area['yscrollcommand'] = scrollb.set
+scrollb.grid(row=0, column=1, sticky="nsew")
+message_area["yscrollcommand"] = scrollb.set
 
 msg_entry = Entry(root, width=20)
-msg_entry.grid(row=2)
+msg_entry.grid(row=2, sticky="E")
 
+root.bind("<Return>", lambda event: send_message())  # Bind return to send msg
 btn_send = Button(root, text="Send", command=send_message, width=20)
-btn_send.grid(row=3)
+btn_send.grid(row=2, column=1, sticky="W")
 
 kick_entry = Entry(root, width=20)
-kick_entry.grid(row=4)
+kick_entry.grid(row=3, sticky="E")
 
 btn_kick = Button(root, text="Kick", command=kick, width=20)
-btn_kick.grid(row=5)
+btn_kick.grid(row=3, column=1, sticky="W")
 
 if __name__ == '__main__':
     main()
+    # Once all loops are broken
+    root.destroy()
     quit()
