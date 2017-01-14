@@ -1,10 +1,12 @@
+----
+
 <p align="center">
   <a href="https://github.com/thatguywiththatname/Chat/archive/master.zip">Download</a>
 </p>
 
----
+----
 
-# Client
+# Using the client:
 
  + Starting the program:
    - Input the server IP
