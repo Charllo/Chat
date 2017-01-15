@@ -38,6 +38,8 @@ root.geometry("600x650")
 def addtotext(widget, text, self_message=False, connection_flag=False, config_message=False):
     tag = ""
 
+    f.write("{}\n".format(str(text)))  # Chat log
+
     message_area.tag_configure("self_message", foreground="blue")
     message_area.tag_configure("connection", foreground="red")
     message_area.tag_configure("server_config", foreground="purple")
@@ -90,9 +92,9 @@ def handler(client, addr):
             r_msg = client.recv(buffer_size)  # Recieve message
 
             if r_msg:  # If there is text
+                decoded = r_msg.decode("utf-8")
                 if nickname_done == False:  # If nickname not set
-                    nick_msg = r_msg.decode("utf-8")  # Decode it
-                    nick_splt = nick_msg.split(" ")  # Split it
+                    nick_splt = decoded.split(" ")  # Split it
                     client_dict[client] = " ".join(nick_splt[1:])  # Add to dict
                     addtotext(message_area, "[Server Message] {} set nick to {}".format(ip_port, client_dict[client]), connection_flag=True)
                     nickname_done = True  # Nick has been set
@@ -100,8 +102,8 @@ def handler(client, addr):
 
                 else:  # If nick already set
                     # r_msg decoded so a) it will print and b) it wont get double encoded
-                    addtotext(message_area, "{}: {}".format(client_dict[client], r_msg.decode("utf-8")))
-                    out_msg = "{}: {}".format(client_dict[client], r_msg.decode("utf-8"))
+                    addtotext(message_area, "{}: {}".format(client_dict[client], decoded))
+                    out_msg = "{}: {}".format(client_dict[client], decoded)
 
                 send_all(client, out_msg)
 
@@ -159,7 +161,8 @@ btn_kick = Button(root, text="Kick", command=kick, width=20)
 btn_kick.grid(row=3, column=1, sticky="W")
 
 if __name__ == '__main__':
-    main()
+    with open ("chatlog.txt", "w") as f:
+        main()
     # Once all loops are broken
     try:
         root.destroy()
