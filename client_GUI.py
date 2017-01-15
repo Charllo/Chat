@@ -66,7 +66,7 @@ def msg_handler():
                 decoded = data.decode("utf-8")
                 split = decoded.split(" ")
                 if decoded == "[Server Message] YOU HAVE BEEN KICKED BY THE SERVER":
-                    addtotext(message_area, "[Client] You have been kicked by the server", important=True)
+                    addtotext(message_area, "[Server Message] You have been kicked by the server", important=True)
                     raise ConnectionResetError
                 elif str(split[0])+str(split[1]) == "[ServerMessage]":
                     addtotext(message_area, str(decoded), important=True)

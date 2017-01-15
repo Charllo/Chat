@@ -57,17 +57,12 @@ def addtotext(widget, text, self_message=False, connection_flag=False, config_me
     widget.configure(state="disabled")
     widget.see(END)
 
-def send_message(input_message="", kicked_client=""):
-    if input_message != "" and kicked_client != "":
-        kicked_client.send(str.encode(input_message))  # Send the message
-
-    else:
-        message = msg_entry.get().encode("utf-8")
-        addtotext(message_area, "You: {}".format(message.decode("utf-8")), True)
-        out_msg = "Server-user: {}".format(message.decode("utf-8"))
-        for c in client_dict.keys():  # For each client
-            c.send(str.encode(out_msg))  # Send the message
-        msg_entry.delete(0, "end")
+def send_message_from_box():
+    message = msg_entry.get()
+    addtotext(message_area, "You: {}".format(message), True)
+    personal_msg = "Server-User: {}".format(message)
+    send_all("", personal_msg)
+    msg_entry.delete(0, "end")
 
 def send_all(in_client, out_message):
     for c in client_dict.keys():  # For each client
@@ -80,7 +75,7 @@ def kick():
     kick_entry.delete(0, "end")
     try:
         client_to_kick = name_map[user]
-        send_message("[Server Message] YOU HAVE BEEN KICKED BY THE SERVER", client_to_kick)
+        client_to_kick.send(str.encode("[Server Message] YOU HAVE BEEN KICKED BY THE SERVER"))  # Send the message
         kick_msg = "[Server Message] {} kicked from server".format(user)
         addtotext(message_area, kick_msg, connection_flag=True)
         send_all("", kick_msg)
@@ -153,8 +148,8 @@ message_area["yscrollcommand"] = scrollb.set
 msg_entry = Entry(root, width=20)
 msg_entry.grid(row=2, sticky="E")
 
-root.bind("<Return>", lambda event: send_message())  # Bind return to send msg
-btn_send = Button(root, text="Send", command=send_message, width=20)
+root.bind("<Return>", lambda event: send_message_from_box())  # Bind return to send msg
+btn_send = Button(root, text="Send", command=send_message_from_box, width=20)
 btn_send.grid(row=2, column=1, sticky="W")
 
 kick_entry = Entry(root, width=20)
