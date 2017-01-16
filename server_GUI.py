@@ -2,6 +2,7 @@ from datetime import datetime
 from tkinter import *
 import socket
 import threading
+import ipaddress
 
 host = ""
 port = ""
@@ -9,6 +10,50 @@ buffer_size = 1024
 client_dict = {}
 tag = ""
 
+# TinyIP Stuff  ################################################################
+# Wew
+asciiDict = {'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7',
+'8':'8','9':'9','!':'10','@':'11','£':'12','$':'13','%':'14','^':'15','&':'16',
+'*':'17','(':'18',')':'19','€':'20','#':'21','-':'22','=':'23','_':'24',
+'+':'25','q':'26','w':'27','e':'28','r':'29','t':'30','y':'31','u':'32',
+'i':'33','o':'34','p':'35','[':'36',']':'37','Q':'38','W':'39','E':'40',
+'R':'41','T':'42','Y':'43','U':'44','I':'45','O':'46','P':'47','{':'48',
+'}':'49','a':'50','s':'51','d':'52','f':'53','g':'54','h':'55','j':'56',
+'k':'57','l':'58',';':'59','A':'60','S':'61','D':'62','F':'63','G':'64',
+'H':'65','J':'66','K':'67','L':'68',':':'69','|':'70','`':'71','z':'72',
+'x':'73','c':'74','v':'75','b':'76','n':'77','m':'78',',':'79','.':'80',
+'å':'81','~':'82','Z':'83','X':'84','C':'85','V':'86','B':'87','N':'88',
+'M':'89','<':'90','>':'91','?':'92','±':'93','§':'94','€':'95','¢':'96',
+'ß':'97','Ω':'98','ç':'99'}
+
+asciiDictInverted = {v: k for k, v in asciiDict.items()}
+
+def TinyIP(ADDRESS):
+    output = []
+
+    IPstr = str(int(ipaddress.IPv4Address(ADDRESS)))
+
+    IPDict = [IPstr[i:i+2] for i in range(0, len(IPstr), 2)]
+
+    for item in IPDict:
+        if '.' in item:
+            index = IPDict.index(item)
+            IPDict[index] = item.replace(".", "")
+
+
+    for IP in IPDict:
+        output.append(asciiDictInverted[IP])
+
+    return "".join(output)
+###############################################################################
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+host = socket.gethostbyname(socket.gethostname())
+if host == "127.0.0.1":  # Try a different way
+    host = socket.gethostbyname(socket.getfqdn())
+
+# Port checking - much except, many else?
 while port == "":
     try:
         port = int(input("Port >> "))
@@ -20,14 +65,12 @@ while port == "":
             port = ""  # Reset
         elif str(port) == "":
             print("Invalid")
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-host = socket.gethostbyname(socket.gethostname())
-if host == "127.0.0.1":  # Try a different way
-    host = socket.gethostbyname(socket.getfqdn())
-
-s.bind((host, port))
+        else:
+            try:
+                s.bind((host, port))
+            except OSError:
+                print("That socket may be in use, try a different one")
+                port = ""  # Reset
 
 try:
     s.listen()
@@ -138,7 +181,8 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "[!] Server started on {}:{}\n".format(host, port), config_message=True)
+    addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
+    addtotext(message_area, "[!] TinyIP: {}\n".format(TinyIP(host)), config_message=True)
     root.mainloop()
 
 #  create a Frame for the Text and Scrollbar
