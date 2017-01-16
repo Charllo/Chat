@@ -1,3 +1,4 @@
+from datetime import datetime
 from tkinter import *
 import socket
 import threading
@@ -6,6 +7,7 @@ host = ""
 port = ""
 nick = ""
 buffer_size = 1024
+tag = ""
 
 # - - - Input + Input checking - - - #
 while host == "":
@@ -19,7 +21,10 @@ while port == "":
     except ValueError:
         print("Invalid")
     else:
-        if str(port) == "":
+        if port > 65535 or port < 0:
+            print("Port must be 0-65535")
+            port = ""  # Reset
+        elif str(port) == "":
             print("Invalid")
 
 while nick == "":
@@ -29,14 +34,12 @@ while nick == "":
 # - - - - - - - - - - - - - - - - - - #
 
 root = Tk()
-root.title("Client")
-root.geometry("600x650")
+root.title("Client | Connected to {}:{}".format(host, port))
+root.geometry("600x630")
 
 def addtotext(widget, text, self_message=False, important=False):
-    tag = ""
-
-    message_area.tag_configure("connection", foreground="red")
-    message_area.tag_configure("self_message", foreground="blue")
+    timestamp = datetime.now().strftime("%H:%M")
+    text = "{} | {}".format(timestamp, text)  # Add timestamp
 
     if self_message == True:
         tag = "self_message"
@@ -51,12 +54,12 @@ def addtotext(widget, text, self_message=False, important=False):
     widget.configure(state="disabled")
     widget.see(END)
 
-def send():
-    message = msg_entry.get().encode("utf-8")
-    if message != "":
-        addtotext(message_area, "You: {}".format(message.decode("utf-8")), True)
-        s.send(message)
+def send_message_from_box():
+    message = msg_entry.get()
     msg_entry.delete(0, "end")
+    if message.rstrip() != "":
+        addtotext(message_area, "You: {}".format(message), True)
+        s.send(str.encode(message))
 
 def msg_handler():
     while True:
@@ -105,9 +108,14 @@ message_area['yscrollcommand'] = scrollb.set
 msg_entry = Entry(root, width=20)
 msg_entry.grid(row=2, sticky="E")
 
-root.bind("<Return>", lambda event: send())  # Bind return to send msg
-btn_send = Button(root, text="Send", command=send, width=20)
+# Bind return to send msg
+root.bind("<Return>", lambda event: send_message_from_box())
+btn_send = Button(root, text="Send", command=send_message_from_box, width=20)
 btn_send.grid(row=2, column=1, sticky="W")
+
+# Add colours to message_area
+message_area.tag_configure("connection", foreground="red")
+message_area.tag_configure("self_message", foreground="blue")
 
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

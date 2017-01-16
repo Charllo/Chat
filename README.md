@@ -17,6 +17,6 @@
 
 ---
 
-The files in CLI are command line versions (not tested completely, unstable)
+The files in CLI are command line versions (not tested completely, possibly unstable)
 
 ---

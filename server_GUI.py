@@ -1,3 +1,4 @@
+from datetime import datetime
 from tkinter import *
 import socket
 import threading
@@ -6,6 +7,7 @@ host = ""
 port = ""
 buffer_size = 1024
 client_dict = {}
+tag = ""
 
 while port == "":
     try:
@@ -13,36 +15,34 @@ while port == "":
     except ValueError:
         print("Invalid")
     else:
-        if str(port) == "":
+        if port > 65535 or port < 0:
+            print("Port must be 0-65535")
+            port = ""  # Reset
+        elif str(port) == "":
             print("Invalid")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 host = socket.gethostbyname(socket.gethostname())
-if host == "127.0.0.1":
+if host == "127.0.0.1":  # Try a different way
     host = socket.gethostbyname(socket.getfqdn())
 
-try:
-    s.bind((host, port))
-except OverflowError:
-    print("\nPort must be 0-65535")
-    input("\nPress enter to quit")
-    quit()
+s.bind((host, port))
 
-s.listen()
+try:
+    s.listen()
+except TypeError:
+    s.listen(5)  # Win7 needs a max number of failed connections
 
 root = Tk()
 root.title("Server | {}:{}".format(host, port))
-root.geometry("600x650")
+root.geometry("775x655")
 
 def addtotext(widget, text, self_message=False, connection_flag=False, config_message=False):
-    tag = ""
+    timestamp = datetime.now().strftime("%H:%M")
+    text = "{} | {}".format(timestamp, text)  # Add timestamp
 
     f.write("{}\n".format(str(text)))  # Chat log
-
-    message_area.tag_configure("self_message", foreground="blue")
-    message_area.tag_configure("connection", foreground="red")
-    message_area.tag_configure("server_config", foreground="purple")
 
     if connection_flag == True:
         tag = "connection"
@@ -61,22 +61,25 @@ def addtotext(widget, text, self_message=False, connection_flag=False, config_me
 
 def send_message_from_box():
     message = msg_entry.get()
-    addtotext(message_area, "You: {}".format(message), True)
-    personal_msg = "Server-User: {}".format(message)
-    send_all("", personal_msg)
     msg_entry.delete(0, "end")
+    if message.rstrip() != "":
+        addtotext(message_area, "You: {}".format(message), True)
+        send_all("", "Server-User: {}".format(message))
 
 def send_all(in_client, out_message):
     for c in client_dict.keys():  # For each client
         if c != in_client:  # If it is not the one that sent the msg
-            c.send(str.encode(out_message))  # Sent the message
+            try:
+                c.send(str.encode(out_message))  # Send the message
+            except BrokenPipeError:  # For Linux
+                c.close()  # Will trigger connection exception
 
 def kick():
-    name_map = {v: k for k, v in client_dict.items()}
+    name_map = {v: k for k, v in client_dict.items()}  # Swap names and client obj
     user = kick_entry.get()
     kick_entry.delete(0, "end")
     try:
-        client_to_kick = name_map[user]
+        client_to_kick = name_map[user]  # Get client object
         client_to_kick.send(str.encode("[Server Message] YOU HAVE BEEN KICKED BY THE SERVER"))  # Send the message
         kick_msg = "[Server Message] {} kicked from server".format(user)
         addtotext(message_area, kick_msg, connection_flag=True)
@@ -96,9 +99,12 @@ def handler(client, addr):
                 if nickname_done == False:  # If nickname not set
                     nick_splt = decoded.split(" ")  # Split it
                     client_dict[client] = " ".join(nick_splt[1:])  # Add to dict
-                    addtotext(message_area, "[Server Message] {} set nick to {}".format(ip_port, client_dict[client]), connection_flag=True)
+                    addtotext(message_area, "[Server Message] {} set nickname to {}".format(ip_port, client_dict[client]), connection_flag=True)
                     nickname_done = True  # Nick has been set
                     out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
+                    client.send(str.encode("[Server Message] Connection successful\n"))  # Tell the client (\n for newline, looks cleaner for client)
+                    addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(client_dict[client], ip_port), connection_flag=True)
+
 
                 else:  # If nick already set
                     # r_msg decoded so a) it will print and b) it wont get double encoded
@@ -108,10 +114,15 @@ def handler(client, addr):
                 send_all(client, out_msg)
 
         except (ConnectionResetError, ConnectionAbortedError):
-            drop_msg = "[Server Message] Client {} ({}) dropped".format(client_dict[client], ip_port)
+            try:
+                drop_msg = "[Server Message] Client {} ({}) dropped".format(client_dict[client], ip_port)
+                client_dict.pop(client)  # Remove client from dict
+                send_all(client, drop_msg)
+            except KeyError:  # Client kicked/broke before fully connected
+                drop_msg = "[Server Message] Unknown client ({}) dropped before full connection".format(ip_port)
+                # No need to send everyone else this message
+
             addtotext(message_area, drop_msg, connection_flag=True)
-            client_dict.pop(client)  # Remove client from dict
-            send_all(client, drop_msg)
             client.close()
             break  # End process
 
@@ -131,7 +142,7 @@ def main():
     root.mainloop()
 
 #  create a Frame for the Text and Scrollbar
-txt_frm = Frame(root, width=600, height=600)
+txt_frm = Frame(root, width=775, height=600)
 txt_frm.grid(row=0, columnspan=2)
 #  ensure a consistent GUI size
 txt_frm.grid_propagate(False)
@@ -159,6 +170,11 @@ kick_entry.grid(row=3, sticky="E")
 
 btn_kick = Button(root, text="Kick", command=kick, width=20)
 btn_kick.grid(row=3, column=1, sticky="W")
+
+ # Add colours to message_area
+message_area.tag_configure("self_message", foreground="blue")
+message_area.tag_configure("connection", foreground="red")
+message_area.tag_configure("server_config", foreground="purple")
 
 if __name__ == '__main__':
     with open ("chatlog.txt", "w") as f:
