@@ -72,8 +72,9 @@ while port == "":
 
 try:
     s.listen()
-except TypeError:
-    s.listen(5)  # Win7 needs a max number of failed connections
+except TypeError: # Py versions < 3.5
+    # 5  = number of unaccepted connections the system allows before refusing new connections
+    s.listen(5)
 
 root = Tk()
 root.title("Server | {}:{}".format(host, port))
