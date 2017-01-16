@@ -26,13 +26,6 @@ asciiDict = {'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7',
 'M':'89','<':'90','>':'91','?':'92','±':'93','§':'94','€':'95','¢':'96',
 'ß':'97','Ω':'98','ç':'99'}
 
-def Int2IP(ipnum):  # I have no idea how this works but it does
-    o1 = int(int(ipnum) / 16777216) % 256
-    o2 = int(int(ipnum) / 65536) % 256
-    o3 = int(int(ipnum) / 256) % 256
-    o4 = int(int(ipnum)) % 256
-    return "{}.{}.{}.{}".format(o1, o2, o3, o4)
-
 def TinyIP(ADDRESS):
     IPDict = list(ADDRESS)
     output = []
@@ -42,7 +35,9 @@ def TinyIP(ADDRESS):
 
     output = "".join(output)
     
-    return str(Int2IP(output))
+    converted_back = str(ipaddress.IPv4Address(int(output)))
+
+    return converted_back
 ###############################################################################
 
 # - - - Input + Input checking - - - #

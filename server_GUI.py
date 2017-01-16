@@ -39,10 +39,8 @@ def TinyIP(ADDRESS):
         if '.' in item:
             index = IPDict.index(item)
             IPDict[index] = item.replace(".", "")
-
-
-    for IP in IPDict:
-        output.append(asciiDictInverted[IP])
+        else:
+            output.append(asciiDictInverted[item])
 
     return "".join(output)
 ###############################################################################
