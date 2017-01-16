@@ -51,7 +51,7 @@ host = socket.gethostbyname(socket.gethostname())
 if host == "127.0.0.1":  # Try a different way
     host = socket.gethostbyname(socket.getfqdn())
 
-# Port checking - much except, many else?
+# Port checking - much except, many wow
 while port == "":
     try:
         port = int(input("Port >> "))
