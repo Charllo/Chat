@@ -84,6 +84,7 @@ def kick():
         kick_msg = "[Server Message] {} kicked from server".format(user)
         addtotext(message_area, kick_msg, connection_flag=True)
         send_all("", kick_msg)
+        client_to_kick.close()  # Force close the connection
     except KeyError:
         addtotext(message_area, "[Kick message] {} not recognized".format(user), connection_flag=True)
 
@@ -107,7 +108,6 @@ def handler(client, addr):
 
 
                 else:  # If nick already set
-                    # r_msg decoded so a) it will print and b) it wont get double encoded
                     addtotext(message_area, "{}: {}".format(client_dict[client], decoded))
                     out_msg = "{}: {}".format(client_dict[client], decoded)
 
@@ -138,7 +138,7 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
+    addtotext(message_area, "[!] Server started on {}:{}\n".format(host, port), config_message=True)
     root.mainloop()
 
 #  create a Frame for the Text and Scrollbar
@@ -155,7 +155,7 @@ message_area.config(font=("consolas", 12), undo=True, wrap='word')
 message_area.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 #  create a Scrollbar and associate it with txt
 scrollb = Scrollbar(txt_frm, command=message_area.yview)
-scrollb.grid(row=0, column=1, sticky="nsew")
+scrollb.grid(row=0, column=3, sticky="nsew")
 message_area["yscrollcommand"] = scrollb.set
 
 msg_entry = Entry(root, width=20)
