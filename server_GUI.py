@@ -181,7 +181,10 @@ def main():
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
     addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
-    addtotext(message_area, "[!] TinyIP: {}\n".format(TinyIP(host)), config_message=True)
+    try:  # Quick fix ;)
+        addtotext(message_area, "[!] TinyIP: {}\n".format(TinyIP(host)), config_message=True)
+    except:
+        pass
     root.mainloop()
 
 #  create a Frame for the Text and Scrollbar
