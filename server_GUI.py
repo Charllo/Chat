@@ -74,12 +74,15 @@ def send_message_from_box():
         send_all("", "Server-User: {}".format(message))
 
 def send_all(in_client, out_message):
+    to_kick = []
     for c in client_dict.keys():  # For each client
         if c != in_client:  # If it is not the one that sent the msg
             try:
                 c.send(str.encode(out_message))  # Send the message
-            except BrokenPipeError:  # For Linux
-                c.close()  # Will trigger connection exception
+            except (BrokenPipeError, OSError):  # For Linux
+                to_kick.append(c)
+    for k in to_kick:  # For each client to kick
+        k.close()  # Will trigger connection exception
 
 def kick():
     name_map = {v: k for k, v in client_dict.items()}  # Swap names and client obj
@@ -120,7 +123,7 @@ def handler(client, addr):
 
                 send_all(client, out_msg)
 
-        except (ConnectionResetError, ConnectionAbortedError):
+        except (ConnectionResetError, ConnectionAbortedError, OSError):
             try:
                 drop_msg = "[Server Message] Client {} ({}) dropped".format(client_dict[client], ip_port)
                 client_dict.pop(client)  # Remove client from dict
