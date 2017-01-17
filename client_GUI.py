@@ -1,8 +1,8 @@
 from datetime import datetime
+from tkinter import messagebox
 from tkinter import *
 import socket
 import threading
-import ipaddress
 
 host = ""
 port = ""
@@ -82,6 +82,11 @@ def msg_handler():
                 if decoded == "[Server Message] YOU HAVE BEEN KICKED BY THE SERVER":
                     addtotext(message_area, "[Server Message] You have been kicked by the server", important=True)
                     raise ConnectionResetError
+
+                elif decoded == "[Server Message] Name already is use, please choose another":
+                    addtotext(message_area, "[Server Message] Name already is use, please choose another", important=True)
+                    raise ConnectionResetError
+
                 # If it's an official server message
                 elif str(split[0])+str(split[1]) == "[ServerMessage]":
                     addtotext(message_area, str(decoded), important=True)
@@ -101,6 +106,17 @@ def main():
     message_handler.daemon = True  # Thread is killed when main ends
     message_handler.start()
     root.mainloop()
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        try:
+            root.destroy()
+        except TclError:
+            pass  # Root already destroyed
+        s.close()  # Close connection
+        quit()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)  # Bind the [X] button to on_closing
 
 #  create a Frame for the Text and Scrollbar
 txt_frm = Frame(root, width=775, height=600)
@@ -145,9 +161,3 @@ if __name__ == '__main__':
         s.send("NICK {}".format(nick).encode("utf-8"))
         addtotext(message_area, "[Client] Name sent", important=True)
         main()
-        # Once all loops are broken
-        try:
-            root.destroy()
-        except TclError:
-            pass  # Root already destroyed
-        quit()

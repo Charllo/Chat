@@ -1,8 +1,8 @@
-from datetime import datetime
-from tkinter import *
-import socket
-import threading
-import ipaddress
+from datetime import datetime   # For timestamping messages
+from tkinter import messagebox  # Quit dialouge box
+from tkinter import *           # GUI
+import socket                   # Socket connections
+import threading                # Running multiple functions at once
 
 host = ""
 port = ""
@@ -109,18 +109,28 @@ def handler(client, addr):
                 decoded = r_msg.decode("utf-8")
                 if nickname_done == False:  # If nickname not set
                     nick_splt = decoded.split(" ")  # Split it
-                    client_dict[client] = " ".join(nick_splt[1:])  # Add to dict
-                    addtotext(message_area, "[Server Message] {} set nickname to {}".format(ip_port, client_dict[client]), connection_flag=True)
-                    nickname_done = True  # Nick has been set
-                    out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
-                    client.send(str.encode("[Server Message] Connection successful\n"))  # Tell the client (\n for newline, looks cleaner for client)
-                    addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(client_dict[client], ip_port), connection_flag=True)
+                    recieved_name = " ".join(nick_splt[1:])  # Extract the name part
+
+                    if recieved_name in client_dict.values():
+                        client.send(str.encode("[Server Message] Name already is use, please choose another"))
+                        addtotext(message_area, "[Server Message] Client {} tried connecting with {} - already in use".format(ip_port, recieved_name), connection_flag=True)
+                        nickname_done = False  # Reset, just in case
+                        out_msg = False
+
+                    else:
+                        client_dict[client] = recieved_name  # Add to dict
+                        addtotext(message_area, "[Server Message] {} set nickname to {}".format(ip_port, recieved_name), connection_flag=True)
+                        nickname_done = True  # Nick has been set
+                        out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
+                        client.send(str.encode("[Server Message] Connection successful\n"))  # Tell the client (\n for newline, looks cleaner for client)
+                        addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(recieved_name, ip_port), connection_flag=True)
 
                 else:  # If nick already set
                     addtotext(message_area, "{}: {}".format(client_dict[client], decoded))
                     out_msg = "{}: {}".format(client_dict[client], decoded)
 
-                send_all(client, out_msg)
+                if out_msg != False:
+                    send_all(client, out_msg)
 
         except (ConnectionResetError, ConnectionAbortedError, OSError):
             try:
@@ -149,6 +159,17 @@ def main():
     client_checking_thrd.start()
     addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
     root.mainloop()
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        try:
+            root.destroy()
+        except TclError:
+            pass  # Root already destroyed
+        s.close()  # Close connection
+        quit()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)  # Bind the [X] button to on_closing
 
 #  create a Frame for the Text and Scrollbar
 txt_frm = Frame(root, width=775, height=600)
@@ -188,9 +209,3 @@ message_area.tag_configure("server_config", foreground="purple")
 if __name__ == '__main__':
     with open ("chatlog.txt", "w") as f:
         main()
-    # Once all loops are broken
-    try:
-        root.destroy()
-    except TclError:
-        pass  # Root already destroyed
-    quit()
