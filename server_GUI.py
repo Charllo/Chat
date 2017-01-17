@@ -148,7 +148,6 @@ def handler(client, addr):
                     client.send(str.encode("[Server Message] Connection successful\n"))  # Tell the client (\n for newline, looks cleaner for client)
                     addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(client_dict[client], ip_port), connection_flag=True)
 
-
                 else:  # If nick already set
                     addtotext(message_area, "{}: {}".format(client_dict[client], decoded))
                     out_msg = "{}: {}".format(client_dict[client], decoded)
