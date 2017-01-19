@@ -157,7 +157,7 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "[!] Server started on {}:{}".format(host, port), config_message=True)
+    addtotext(message_area, "[!] Server started on {}:{}\n".format(host, port), config_message=True)
     root.mainloop()
 
 def on_closing():
