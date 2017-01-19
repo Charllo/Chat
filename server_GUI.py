@@ -38,7 +38,7 @@ while port == "":
 try:
     s.listen()
 except TypeError: # Py versions < 3.5
-    # 5  = number of unaccepted connections the system allows before refusing new connections
+    # 5  = Connection queue
     s.listen(5)
 
 root = Tk()
@@ -90,7 +90,7 @@ def kick():
     kick_entry.delete(0, "end")
     try:
         client_to_kick = name_map[user]  # Get client object
-        client_to_kick.send(str.encode("[Server Message] YOU HAVE BEEN KICKED BY THE SERVER"))  # Send the message
+        client_to_kick.send(str.encode("[Server Message] You have been kicked by the server"))  # Send the message
         kick_msg = "[Server Message] {} kicked from server".format(user)
         addtotext(message_area, kick_msg, connection_flag=True)
         send_all("", kick_msg)
@@ -112,7 +112,7 @@ def handler(client, addr):
                     recieved_name = " ".join(nick_splt[1:])  # Extract the name part
 
                     if recieved_name in client_dict.values():
-                        client.send(str.encode("[Server Message] Name already is use, please choose another"))
+                        client.send(str.encode("[Server Message] Name already in use, please choose another"))
                         addtotext(message_area, "[Server Message] Client {} tried connecting with {} - already in use".format(ip_port, recieved_name), connection_flag=True)
                         nickname_done = False  # Reset, just in case
                         out_msg = False
@@ -162,6 +162,7 @@ def main():
 
 def on_closing():
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        addtotext(message_area, "[!] Server Stopped", config_message=True)  # Mainly just so this gets logged
         try:
             root.destroy()
         except TclError:

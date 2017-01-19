@@ -80,11 +80,11 @@ def msg_handler():
                 decoded = data.decode("utf-8")
                 split = decoded.split(" ")
                 if decoded == "[Server Message] YOU HAVE BEEN KICKED BY THE SERVER":
-                    addtotext(message_area, "[Server Message] You have been kicked by the server", important=True)
+                    addtotext(message_area, decoded, important=True)
                     raise ConnectionResetError
 
                 elif decoded == "[Server Message] Name already is use, please choose another":
-                    addtotext(message_area, "[Server Message] Name already is use, please choose another", important=True)
+                    addtotext(message_area, decoded, important=True)
                     raise ConnectionResetError
 
                 # If it's an official server message
