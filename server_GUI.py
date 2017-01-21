@@ -224,8 +224,8 @@ if __name__ == '__main__':  # Hasn't been imported
 
         # Port input checking
         if port > 65535 or port < 0:
-            addtotext(message_area, "[!] Port must be 0-65535, running on 5640 instead", config_message=True)
-            port = 5640
+            addtotext(message_area, "[!] Port must be 0-65535", config_message=True)
+            unexpected_shutdown()
 
         # socket.bind() checking
         try:
