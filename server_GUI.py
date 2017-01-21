@@ -3,12 +3,23 @@ from tkinter import messagebox  # Quit dialouge box
 from tkinter import *           # GUI
 import socket                   # Socket connections
 import threading                # Running multiple functions at once
+import argparse                 # Arguments
 
 host = ""
-port = ""
 buffer_size = 1024
 client_dict = {}
 tag = ""
+
+fancy_server_ouput = """
+= SERVER INFO ==================
+ IP:   {}
+ PORT: {}
+ NAME: {}
+================================"""
+
+root = Tk()
+root.geometry("775x655")
+root.title("Server | Error")  # This will be changed if no error occurs
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -16,34 +27,15 @@ host = socket.gethostbyname(socket.gethostname())
 if host == "127.0.0.1":  # Try a different way
     host = socket.gethostbyname(socket.getfqdn())
 
-# Port checking - much except, many wow
-while port == "":
-    try:
-        port = int(input("Port >> "))
-    except ValueError:
-        print("Invalid")
-    else:
-        if port > 65535 or port < 0:
-            print("Port must be 0-65535")
-            port = ""  # Reset
-        elif str(port) == "":
-            print("Invalid")
-        else:
-            try:
-                s.bind((host, port))
-            except OSError:
-                print("That socket may be in use, try a different one")
-                port = ""  # Reset
-
-try:
-    s.listen()
-except TypeError: # Py versions < 3.5
-    # 5  = Connection queue
-    s.listen(5)
-
-root = Tk()
-root.title("Server | {}:{}".format(host, port))
-root.geometry("775x655")
+# Argument parsing stuff
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--port", help="The port which this server will be bound to", type=int, default=5640)
+parser.add_argument("-n", "--name", help="The name of the server", default="TCP Server")
+args = parser.parse_args()
+# default port = 5640 -> iana.org -> unassigned port
+# -p has to be provided if you want a custom name
+port = args.port
+name = args.name
 
 def addtotext(widget, text, self_message=False, connection_flag=False, config_message=False):
     timestamp = datetime.now().strftime("%H:%M")
@@ -65,6 +57,11 @@ def addtotext(widget, text, self_message=False, connection_flag=False, config_me
     widget.insert("end", "\n{}".format(text), tag)
     widget.configure(state="disabled")
     widget.see(END)
+
+def disable_all():
+    btn_send.config(state="disabled")
+    btn_kick.config(state="disabled")
+    root.bind("<Return>", lambda event: disable_all())  # Rebind to do nothing
 
 def send_message_from_box():
     message = msg_entry.get()
@@ -122,7 +119,8 @@ def handler(client, addr):
                         addtotext(message_area, "[Server Message] {} set nickname to {}".format(ip_port, recieved_name), connection_flag=True)
                         nickname_done = True  # Nick has been set
                         out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
-                        client.send(str.encode("[Server Message] Connection successful\n"))  # Tell the client (\n for newline, looks cleaner for client)
+                        # \n because it looks cleaner on the client side
+                        client.send(str.encode("[Server Message] {}, your connection to {} was successfu!\n".format(recieved_name, name)))  # Tell the client
                         addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(recieved_name, ip_port), connection_flag=True)
 
                 else:  # If nick already set
@@ -147,7 +145,11 @@ def handler(client, addr):
 
 def client_checking():
     while True:
-        client,addr = s.accept()
+        try:
+            client,addr = s.accept()
+        except OSError:  # socket closed
+            break
+
         addtotext(message_area, "[Server Message] Accepted connection from: {}:{}".format(addr[0], addr[1]), connection_flag=True)
         client_handler = threading.Thread(target=handler,args=(client,addr))
         client_handler.daemon = True
@@ -157,8 +159,17 @@ def main():
     client_checking_thrd = threading.Thread(target=client_checking)
     client_checking_thrd.daemon = True
     client_checking_thrd.start()
-    addtotext(message_area, "[!] Server started on {}:{}\n".format(host, port), config_message=True)
+    addtotext(message_area, "[!] Server started".format(host, port), config_message=True)
+    addtotext(message_area, "= SERVER INFO ==================", config_message=True)
+    addtotext(message_area, "IP:   {}".format(host), config_message=True)
+    addtotext(message_area, "PORT: {}".format(port), config_message=True)
+    addtotext(message_area, "NAME: {}".format(name), config_message=True)
+    addtotext(message_area, "================================\n", config_message=True)
     root.mainloop()
+
+def unexpected_shutdown():
+    disable_all()  # Buttons can't be used
+    root.mainloop()  # Allow user to see message, when [x] pressed all will quit
 
 def on_closing():
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -207,6 +218,31 @@ message_area.tag_configure("self_message", foreground="blue")
 message_area.tag_configure("connection", foreground="red")
 message_area.tag_configure("server_config", foreground="purple")
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # Hasn't been imported
     with open ("chatlog.txt", "w") as f:
-        main()
+        addtotext(message_area, "[!] chatlog.txt ready to write", config_message=True)
+
+        # Port input checking
+        if port > 65535 or port < 0:
+            addtotext(message_area, "[!] Port must be 0-65535, running on 5640 instead", config_message=True)
+            port = 5640
+
+        # socket.bind() checking
+        try:
+            s.bind((host, port))
+        except OSError:  # Can't bind
+            addtotext(message_area, "[!] Unable to bind to port {}".format(port), config_message=True)
+            unexpected_shutdown()
+
+        else:  # If everything went well
+            addtotext(message_area, "[!] Socket bound", config_message=True)
+
+            try:
+                s.listen()
+            except TypeError: # Py versions < 3.5
+                # 5  = Connection queue
+                s.listen(5)
+
+            addtotext(message_area, "[!] Socket listening", config_message=True)
+            root.title("Server | {} | {}:{}".format(name, host, port))
+            main()  # Start main processes
