@@ -10,13 +10,6 @@ buffer_size = 1024
 client_dict = {}
 tag = ""
 
-fancy_server_ouput = """
-= SERVER INFO ==================
- IP:   {}
- PORT: {}
- NAME: {}
-================================"""
-
 root = Tk()
 root.geometry("775x655")
 root.title("Server | Error")  # This will be changed if no error occurs
