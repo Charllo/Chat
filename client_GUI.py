@@ -1,8 +1,8 @@
-from datetime import datetime
 from tkinter import messagebox
+from datetime import datetime
 from tkinter import *
-import socket
 import threading
+import socket
 
 host = ""
 port = ""

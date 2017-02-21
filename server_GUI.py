@@ -113,7 +113,7 @@ def handler(client, addr):
                         nickname_done = True  # Nick has been set
                         out_msg = "[Server Message] {} joined".format(client_dict[client])  # Tell all clients
                         # \n because it looks cleaner on the client side
-                        client.send(str.encode("[Server Message] {}, your connection to {} was successfu!\n".format(recieved_name, name)))  # Tell the client
+                        client.send(str.encode("[Server Message] {}, your connection to {} was successful!\n".format(recieved_name, name)))  # Tell the client
                         addtotext(message_area, "[Server Message] Client {} ({}) connection successful".format(recieved_name, ip_port), connection_flag=True)
 
                 else:  # If nick already set
