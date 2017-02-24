@@ -13,7 +13,7 @@ class MainApplication(tk.Frame):
         self.nick = nick
         self.buffer_size = 1024
         self.tag = ""
-        self.parent.title("Client | Connected to {}:{}".format(host, port))
+        self.parent.title("Client | Error")
         self.parent.geometry("775x630")
 
         #  create a Frame for the Text and Scrollbar
@@ -41,23 +41,32 @@ class MainApplication(tk.Frame):
         self.btn_send.grid(row=2, column=1, sticky="W")
 
         # Add colours to message_area
-        self.message_area.tag_configure("connection", foreground="red")
+        self.message_area.tag_configure("important", foreground="red")
         self.message_area.tag_configure("self_message", foreground="blue")
+
+        self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.s.connect((host, port))
         except OSError:
             self.addtotext(self.message_area, "[Client] Socket attempted to connect to an unreachable network", important=True)
+            self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
             self.parent.mainloop()
         except ConnectionRefusedError:
             self.addtotext(self.message_area, "[Client] No connection could be made", important=True)
+            self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
             self.parent.mainloop()
         else:
+            self.parent.title("Client | Connected to {}:{}".format(host, port))
             self.addtotext(self.message_area, "[Client] Connected to server", important=True)
             self.s.send("NICK {}".format(nick).encode("utf-8"))
             self.addtotext(self.message_area, "[Client] Name sent", important=True)
-            self.main()
+            self.parent.bind("<Return>", lambda event: self.send_message_from_box()) # Bind return to send msg
+            self.btn_send.config(state="normal")  # Connected, so user can send messages now
+            self.message_handler = threading.Thread(target=self.msg_handler)
+            self.message_handler.daemon = True  # Thread is killed when main ends
+            self.message_handler.start()
 
     def disable_sending(self):
         self.btn_send.config(state="disabled")
@@ -67,10 +76,10 @@ class MainApplication(tk.Frame):
         timestamp = datetime.now().strftime("%H:%M")
         text = "{} | {}".format(timestamp, text)  # Add timestamp
 
-        if self_message == True:
+        if self_message:
             self.tag = "self_message"
-        elif important == True:
-            self.tag = "connection"
+        elif important:
+            self.tag = "important"
         else:
             self.tag = ""
 
@@ -115,15 +124,8 @@ class MainApplication(tk.Frame):
                 self.s.close()
                 self.disable_sending()
                 self.addtotext(self.message_area, "[Client] Connection to server lost", important=True)
+                self.parent.title("Client | Disconnected")
                 break
-
-    def main(self):
-        self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.parent.bind("<Return>", lambda event: self.send_message_from_box()) # Bind return to send msg
-        self.btn_send.config(state="normal")  # Connected, so user can send messages now
-        self.message_handler = threading.Thread(target=self.msg_handler)
-        self.message_handler.daemon = True  # Thread is killed when main ends
-        self.message_handler.start()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -138,16 +140,23 @@ class LaunchWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.parent.title("Connect")
-        self.parent.geometry("300x100")
+        self.parent.title("~")
+        self.parent.geometry("190x100")
         self.host_entry = tk.Entry(self.parent, width=20)
+        self.host_label = tk.Label(self.parent, text = "Host IP:")
         self.port_entry = tk.Entry(self.parent, width=20)
+        self.port_label = tk.Label(self.parent, text = "Host Port:")
         self.nick_entry = tk.Entry(self.parent, width=20)
+        self.nick_label = tk.Label(self.parent, text = "Name:")
         self.btn_connect = tk.Button(self.parent, text="Connect", command=self.checkvalues, width=20)
-        self.host_entry.grid(row=0)
-        self.port_entry.grid(row=1)
-        self.nick_entry.grid(row=2)
-        self.btn_connect.grid(row=3)
+        self.host_entry.grid(row=0, column=1)
+        self.host_label.grid(row=0)
+        self.port_entry.grid(row=1, column=1)
+        self.port_label.grid(row=1)
+        self.nick_entry.grid(row=2, column=1)
+        self.nick_label.grid(row=2)
+        self.btn_connect.grid(row=3, columnspan=2)
+        self.parent.bind("<Return>", lambda event: self.checkvalues())
 
     def checkvalues(self):
         self.host = self.host_entry.get()
@@ -175,9 +184,9 @@ class LaunchWindow(tk.Frame):
             messagebox.showinfo("Error", "Invalid name")
             return
 
+        self.parent.withdraw()  # Hide this connection window
         self.new_root = tk.Tk()
         MainApplication(self.new_root, self.host, self.port, self.nick)
-        self.parent.withdraw()  # Hide this connection window
         self.new_root.mainloop()
         self.new_root.destroy()
 
