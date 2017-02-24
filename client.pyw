@@ -48,7 +48,7 @@ class MainApplication(tk.Frame):
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.s.connect((host, port))
+            self.s.connect((self.host, self.port))
         except OSError:
             self.addtotext(self.message_area, "[Client] Socket attempted to connect to an unreachable network", important=True)
             self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
@@ -58,7 +58,7 @@ class MainApplication(tk.Frame):
         else:
             self.parent.title("Client | Connected to {}:{}".format(host, port))
             self.addtotext(self.message_area, "[Client] Connected to server", important=True)
-            self.s.send("NICK {}".format(nick).encode("utf-8"))
+            self.s.send("NICK {}".format(self.nick).encode("utf-8"))
             self.addtotext(self.message_area, "[Client] Name sent", important=True)
             self.parent.bind("<Return>", lambda event: self.send_message_from_box()) # Bind return to send msg
             self.btn_send.config(state="normal")  # Connected, so user can send messages now
@@ -92,8 +92,8 @@ class MainApplication(tk.Frame):
         self.msg_entry.delete(0, "end")
         if message.rstrip() != "":
             try:
-                self.addtotext(self.message_area, "You: {}".format(message), True)
                 self.s.send(str.encode(message))
+                self.addtotext(self.message_area, "You: {}".format(message), True)
             except (ConnectionResetError, OSError):  # Needed after being kicked
                 self.s.close()
 
