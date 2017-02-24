@@ -8,26 +8,27 @@
 
 # Using the client:
 
- + Starting the program:
-   - Input the server IP
-   - Input the server Port
-   - Input the name which you want other people to see when you send a message
-
- + Press enter or the send button to send message
+ + Input the server IP
+ + Input the server Port
+ + Input the name which you want other people to see when you send a message
+ + Press enter or the connect button to connect
+ + Type in the message bar then press enter or the send button to send message
 
 ---
 
-# Using the server
-
-+ Run the server .py file:
-  - Run with argument `-p $port` for a custom port, otherwise 5640 is used
-  - Run with argument `-n $name` for a custom server name, otherwise "TCP Server" is used
-    * `-n` can only (currently) be used if you also provide `-p`
+# Using the server:
+ + Input the chosen port (a default one will already be in the box)
+ + Input a server name (a default one will also already be in the box)
+ + Choose whether to log the chat with the checkbox
+ + Press enter or start to start server
+ + Type in the message bar then press enter or the send button to send message
+ + You can also kick people by typing in their name and pressing `kick`
 
 ---
 
 # Notes
 
-The files in CLI are command line versions (not tested completely, possibly unstable).
+ + The files in CLI are command line versions (not tested completely, possibly unstable and not very clean or efficient)
+ + The files in Old GUI don't use classes, are less optimised and don't use login windows
 
 ---
