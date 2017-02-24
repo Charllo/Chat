@@ -52,11 +52,9 @@ class MainApplication(tk.Frame):
         except OSError:
             self.addtotext(self.message_area, "[Client] Socket attempted to connect to an unreachable network", important=True)
             self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
-            self.parent.mainloop()
         except ConnectionRefusedError:
             self.addtotext(self.message_area, "[Client] No connection could be made", important=True)
             self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
-            self.parent.mainloop()
         else:
             self.parent.title("Client | Connected to {}:{}".format(host, port))
             self.addtotext(self.message_area, "[Client] Connected to server", important=True)
@@ -188,7 +186,6 @@ class LaunchWindow(tk.Frame):
         self.new_root = tk.Tk()
         MainApplication(self.new_root, self.host, self.port, self.nick)
         self.new_root.mainloop()
-        self.new_root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
