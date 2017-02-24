@@ -6,7 +6,7 @@ import threading                # Running multiple functions at once
 import argparse                 # Arguments
 
 class MainApplication(tk.Frame):
-    def __init__(self, parent, host, port, name, *args, **kwargs):
+    def __init__(self, parent, host, port, name, checkbox_value, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.parent.geometry("775x655")
@@ -15,6 +15,7 @@ class MainApplication(tk.Frame):
         self.host = host
         self.port = port
         self.name = name
+        self.chatlog_bool = checkbox_value
         self.client_dict = {}
         self.buffer_size = 1024
         self.tag = ""
@@ -55,8 +56,9 @@ class MainApplication(tk.Frame):
         self.message_area.tag_configure("connection", foreground="red")
         self.message_area.tag_configure("server_config", foreground="purple")
 
-        self.chatlogfile = open("chatlog.txt", "w")
-        self.addtotext(self.message_area, "[!] chatlog.txt ready to write", config_message=True)
+        if self.chatlog_bool:
+            self.chatlogfile = open("chatlog.txt", "w")
+            self.addtotext(self.message_area, "[!] chatlog.txt ready to write", config_message=True)
 
         # socket.bind() checking
         try:
@@ -189,7 +191,8 @@ class MainApplication(tk.Frame):
         timestamp = datetime.now().strftime("%H:%M")
         text = "{} | {}".format(timestamp, text)  # Add timestamp
 
-        self.chatlogfile.write("{}\n".format(str(text)))  # Chat log
+        if self.chatlog_bool:
+            self.chatlogfile.write("{}\n".format(str(text)))  # Chat log
 
         if connection_flag == True:
             self.tag = "connection"
@@ -213,7 +216,8 @@ class MainApplication(tk.Frame):
                 self.parent.destroy()
             except TclError:
                 pass  # Root already destroyed
-            self.chatlogfile.close()  # Close connection to chatlog file
+            if self.chatlog_bool:
+                self.chatlogfile.close()  # Close connection to chatlog file
             self.s.close()  # Close connection
             quit()
 
@@ -221,29 +225,33 @@ class LaunchWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.check_log_var = tk.IntVar()
 
         self.host = socket.gethostbyname(socket.gethostname())
         if self.host == "127.0.0.1":  # Try a different way
             self.host = socket.gethostbyname(socket.getfqdn())
 
         self.parent.title("~")
-        self.parent.geometry("190x100")
+        self.parent.geometry("190x115")
         self.host_label_filled = tk.Label(self.parent, text = "{}".format(self.host))
         self.host_label = tk.Label(self.parent, text = "Host IP:")
-        self.port_entry = tk.Entry(self.parent, width=20)
         self.port_label = tk.Label(self.parent, text = "Host Port:")
-        self.port_entry.insert(0, "5640")  # Insert default value
-        self.name_entry = tk.Entry(self.parent, width=20)
         self.name_label = tk.Label(self.parent, text = "Server Name:")
-        self.name_entry.insert(0, "TCP Server")  # Insert default value
+        self.port_entry = tk.Entry(self.parent, width=20)
+        self.name_entry = tk.Entry(self.parent, width=20)
         self.btn_start = tk.Button(self.parent, text="Start", command=self.checkvalues, width=20)
-        self.host_label_filled.grid(row=0, column=1)
+        self.chatlog_checkbutton = tk.Checkbutton(self.parent, text="Enable Chatlog", variable=self.check_log_var)
+        self.port_entry.insert(0, "5640")  # Insert default value
+        self.name_entry.insert(0, "TCP Server")  # Insert default value
         self.host_label.grid(row=0)
-        self.port_entry.grid(row=1, column=1)
         self.port_label.grid(row=1)
-        self.name_entry.grid(row=2, column=1)
         self.name_label.grid(row=2)
+        self.host_label_filled.grid(row=0, column=1)
+        self.port_entry.grid(row=1, column=1)
+        self.name_entry.grid(row=2, column=1)
         self.btn_start.grid(row=3, columnspan=2)
+        self.chatlog_checkbutton.grid(row=4, columnspan=2)
+        self.chatlog_checkbutton.select()  # Defaults to being checked
         self.parent.bind("<Return>", lambda event: self.checkvalues())
 
     def checkvalues(self):
@@ -267,7 +275,7 @@ class LaunchWindow(tk.Frame):
 
         self.parent.withdraw()  # Hide this connection window
         self.new_root = tk.Tk()
-        MainApplication(self.new_root, self.host, port, name)
+        MainApplication(self.new_root, self.host, port, name, self.check_log_var.get())
         self.new_root.mainloop()
 
 if __name__ == "__main__":
