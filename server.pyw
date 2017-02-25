@@ -3,7 +3,6 @@ from tkinter import messagebox  # Quit dialouge box
 import tkinter as tk            # GUI
 import socket                   # Socket connections
 import threading                # Running multiple functions at once
-import argparse                 # Arguments
 
 class MainApplication(tk.Frame):
     def __init__(self, parent, host, port, name, checkbox_value, *args, **kwargs):
