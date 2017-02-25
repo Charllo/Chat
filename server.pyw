@@ -231,7 +231,7 @@ class LaunchWindow(tk.Frame):
             self.host = socket.gethostbyname(socket.getfqdn())
 
         self.parent.title("~")
-        self.parent.geometry("190x115")
+        self.parent.geometry("190x145")
         self.host_label_filled = tk.Label(self.parent, text = "{}".format(self.host))
         self.host_label = tk.Label(self.parent, text = "Host IP:")
         self.port_label = tk.Label(self.parent, text = "Host Port:")
@@ -239,17 +239,19 @@ class LaunchWindow(tk.Frame):
         self.port_entry = tk.Entry(self.parent, width=20)
         self.name_entry = tk.Entry(self.parent, width=20)
         self.btn_start = tk.Button(self.parent, text="Start", command=self.checkvalues, width=20)
+        self.btn_scan = tk.Button(self.parent, text="Scan for available ports", command=self.portscan, width=20)
         self.chatlog_checkbutton = tk.Checkbutton(self.parent, text="Enable Chatlog", variable=self.check_log_var)
-        self.port_entry.insert(0, "5640")  # Insert default value
+        self.port_entry.insert(0, "49152")  # Insert default value
         self.name_entry.insert(0, "TCP Server")  # Insert default value
         self.host_label.grid(row=0)
         self.port_label.grid(row=1)
         self.name_label.grid(row=2)
+        self.btn_scan.grid(row=5, columnspan=2)
         self.host_label_filled.grid(row=0, column=1)
         self.port_entry.grid(row=1, column=1)
         self.name_entry.grid(row=2, column=1)
-        self.btn_start.grid(row=3, columnspan=2)
-        self.chatlog_checkbutton.grid(row=4, columnspan=2)
+        self.chatlog_checkbutton.grid(row=3, columnspan=2)
+        self.btn_start.grid(row=4, columnspan=2)
         self.chatlog_checkbutton.select()  # Defaults to being checked
         self.parent.bind("<Return>", lambda event: self.checkvalues())
 
@@ -266,6 +268,16 @@ class LaunchWindow(tk.Frame):
             elif str(port) == "":
                 messagebox.showinfo("Error", "Invalid port")
                 return
+            else:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                try:
+                    sock.bind((self.host, port))
+                except OSError:
+                    sock.close()
+                    messagebox.showinfo("Error", "Port in use")
+                    return
+                else:
+                    sock.close()
 
         name = self.name_entry.get()
         if name == "":
@@ -276,6 +288,35 @@ class LaunchWindow(tk.Frame):
         self.new_root = tk.Tk()
         MainApplication(self.new_root, self.host, port, name, self.check_log_var.get())
         self.new_root.mainloop()
+
+    def portscan(self):
+        # Disable buttons
+        self.btn_start.config(state="disabled")
+        self.btn_scan.config(state="disabled")
+        self.parent.bind("<Return>", lambda x: messagebox.showinfo("Please wait", "Still scanning ports"))
+
+        # Only scans through iana approved free ports
+        # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?&page=131
+        for test_port in range(49152, 65536):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                sock.bind((self.host, test_port))
+            except OSError:
+                pass
+            else:
+                new_port = test_port
+                sock.close()
+                break
+            sock.close()
+
+        self.port_entry.delete(0, tk.END)
+        self.port_entry.insert(0, new_port)
+
+        # Re-enable buttons
+        self.btn_start.config(state="normal")
+        self.btn_scan.config(state="normal")
+        self.parent.bind("<Return>", lambda event: self.checkvalues())
+
 
 if __name__ == "__main__":
     root = tk.Tk()
