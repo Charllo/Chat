@@ -13,21 +13,27 @@ class MainApplication(tk.Frame):
         self.nick = nick
         self.buffer_size = 1024
         self.tag = ""
-        self.parent.title("Client | Error")
-        self.parent.geometry("775x630")
+        self.parent.title("Python-Chat: Client")
+        self.parent.geometry("775x730")
+        
+        self.parent.wm_iconbitmap("Assets/icon.ico")
 
         #  create a Frame for the Text and Scrollbar
         self.txt_frm = tk.Frame(self.parent, width=775, height=600)
         self.txt_frm.grid(row=0, columnspan=2)
+        
         #  ensure a consistent GUI size
         self.txt_frm.grid_propagate(False)
+        
         #  implement stretchability
         self.txt_frm.grid_rowconfigure(0, weight=1)
         self.txt_frm.grid_columnconfigure(0, weight=1)
+        
         #  create a Text widget
         self.message_area = tk.Text(self.txt_frm, borderwidth=3, relief="sunken", state="disabled")
         self.message_area.config(font=("consolas", 12), undo=True, wrap='word')
         self.message_area.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+
         #  create a Scrollbar and associate it with txt
         self.scrollb = tk.Scrollbar(self.txt_frm, command=self.message_area.yview)
         self.scrollb.grid(row=0, column=3, sticky='nsew')
@@ -138,22 +144,37 @@ class LaunchWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.parent.title("~")
-        self.parent.geometry("190x100")
-        self.host_label = tk.Label(self.parent, text = "Host IP:")
-        self.port_label = tk.Label(self.parent, text = "Host Port:")
-        self.nick_label = tk.Label(self.parent, text = "Name:")
-        self.btn_connect = tk.Button(self.parent, text="Connect", command=self.checkvalues, width=20)
-        self.host_entry = tk.Entry(self.parent, width=20)
-        self.port_entry = tk.Entry(self.parent, width=20)
-        self.nick_entry = tk.Entry(self.parent, width=20)
-        self.host_entry.grid(row=0, column=1)
-        self.port_entry.grid(row=1, column=1)
-        self.nick_entry.grid(row=2, column=1)
-        self.host_label.grid(row=0)
-        self.port_label.grid(row=1)
-        self.nick_label.grid(row=2)
-        self.btn_connect.grid(row=3, columnspan=2)
+        self.parent.title("Login")
+        self.parent.geometry("700x400")
+        self.parent.wm_iconbitmap("Assets/icon.ico")
+
+        self.btn_connect = tk.Button(self.parent, text="Connect", command=self.checkvalues, width=20, fg="#FFCC33", bg="#383a39")
+
+        host_default = tk.StringVar(root, value='Host IP..')
+        self.host_entry = tk.Entry(self.parent, width=20, textvariable=host_default, fg="#666666")
+        
+        port_default = tk.StringVar(root, value='Host Port..')
+        self.port_entry = tk.Entry(self.parent, width=20, textvariable=port_default, fg="#666666")        
+        
+        nick_default = tk.StringVar(root, value='Nickname..')
+        self.nick_entry = tk.Entry(self.parent, width=20, textvariable=nick_default, fg="#666666")
+
+        self.parent.configure(background="#FFCC33")    #  yellow
+
+        self.logo_image = tk.PhotoImage(file="Assets/Logo.gif")
+        self.logo = tk.Label(parent, image=self.logo_image, bg="#FFCC33")
+        self.logo.pack()
+
+        self.blank = tk.Label(self.parent, text="<BLANK>", bg="#FFCC33", fg="#FFCC33")
+
+        #  packing
+        self.host_entry.pack()
+        self.port_entry.pack()
+        self.nick_entry.pack()
+
+        self.blank.pack()
+        self.btn_connect.pack()
+
         self.parent.bind("<Return>", lambda event: self.checkvalues())
 
     def checkvalues(self):
