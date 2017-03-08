@@ -148,11 +148,6 @@ class LaunchWindow(tk.Frame):
         self.parent.geometry("700x400")
         self.parent.wm_iconbitmap("Assets/icon.ico")
 
-        #  widgets
-        self.host_label = tk.Label(self.parent, text = "Host IP:", bg="#FFCC33")
-        self.port_label = tk.Label(self.parent, text = "Host Port:", bg="#FFCC33")
-        self.nick_label = tk.Label(self.parent, text = "Name:", bg="#FFCC33")
-
         self.btn_connect = tk.Button(self.parent, text="Connect", command=self.checkvalues, width=20, fg="#FFCC33", bg="#383a39")
 
         host_default = tk.StringVar(root, value='Host IP..')
