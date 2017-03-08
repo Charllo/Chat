@@ -13,22 +13,22 @@ class MainApplication(tk.Frame):
         self.nick = nick
         self.buffer_size = 1024
         self.tag = ""
-        self.parent.title("Python-Chat: Client")
-        self.parent.geometry("775x730")
-        
+        self.parent.title("Client | Error")
+        self.parent.geometry("775x630")
+
         self.parent.wm_iconbitmap("Assets/icon.ico")
 
         #  create a Frame for the Text and Scrollbar
         self.txt_frm = tk.Frame(self.parent, width=775, height=600)
         self.txt_frm.grid(row=0, columnspan=2)
-        
+
         #  ensure a consistent GUI size
         self.txt_frm.grid_propagate(False)
-        
+
         #  implement stretchability
         self.txt_frm.grid_rowconfigure(0, weight=1)
         self.txt_frm.grid_columnconfigure(0, weight=1)
-        
+
         #  create a Text widget
         self.message_area = tk.Text(self.txt_frm, borderwidth=3, relief="sunken", state="disabled")
         self.message_area.config(font=("consolas", 12), undo=True, wrap='word')
@@ -152,10 +152,10 @@ class LaunchWindow(tk.Frame):
 
         host_default = tk.StringVar(root, value='Host IP..')
         self.host_entry = tk.Entry(self.parent, width=20, textvariable=host_default, fg="#666666")
-        
+
         port_default = tk.StringVar(root, value='Host Port..')
-        self.port_entry = tk.Entry(self.parent, width=20, textvariable=port_default, fg="#666666")        
-        
+        self.port_entry = tk.Entry(self.parent, width=20, textvariable=port_default, fg="#666666")
+
         nick_default = tk.StringVar(root, value='Nickname..')
         self.nick_entry = tk.Entry(self.parent, width=20, textvariable=nick_default, fg="#666666")
 
