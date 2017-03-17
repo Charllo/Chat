@@ -16,7 +16,7 @@ class MainApplication(tk.Frame):
         self.parent.title("Client | Error")
         self.parent.geometry("775x630")
 
-        self.parent.wm_iconbitmap("Assets/icon.ico")
+        self.parent.wm_iconbitmap("assets/icon.ico")
 
         #  create a Frame for the Text and Scrollbar
         self.txt_frm = tk.Frame(self.parent, width=775, height=600)
@@ -146,7 +146,7 @@ class LaunchWindow(tk.Frame):
         self.parent = parent
         self.parent.title("Login")
         self.parent.geometry("700x400")
-        self.parent.wm_iconbitmap("Assets/icon.ico")
+        self.parent.wm_iconbitmap("assets/icon.ico")
 
         self.btn_connect = tk.Button(self.parent, text="Connect", command=self.checkvalues, width=20, fg="#FFCC33", bg="#383a39")
 
@@ -161,7 +161,7 @@ class LaunchWindow(tk.Frame):
 
         self.parent.configure(background="#FFCC33")    #  yellow
 
-        self.logo_image = tk.PhotoImage(file="Assets/Logo.gif")
+        self.logo_image = tk.PhotoImage(file="assets/Logo.gif")
         self.logo = tk.Label(parent, image=self.logo_image, bg="#FFCC33")
         self.logo.pack()
 

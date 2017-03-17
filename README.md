@@ -28,8 +28,6 @@
 
 # Notes
 
- + The new server and client are .pyw files. This means that the console window will not open, just the tkinter GUI
- + The files in CLI are command line versions (not tested completely, possibly unstable and not very clean or efficient)
- + The files in Old GUI don't use classes, are less optimised and don't use login windows
+ + The server and client are .pyw files. This means that the console window will not open, just the tkinter GUI
 
 ---
