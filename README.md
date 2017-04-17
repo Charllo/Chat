@@ -26,6 +26,12 @@
 
 ---
 
+# Credits
+
+ + Thanks to @Cutwell for the fancy graphic stuff in client.pyw
+ 
+---
+
 # Notes
 
  + The server and client are .pyw files. This means that the console window will not open, just the tkinter GUI
