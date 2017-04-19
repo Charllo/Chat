@@ -52,6 +52,12 @@ class MainApplication(tk.Frame):
 
         self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+        # Threading so the GUI doesen't freeze when connecting
+        t = threading.Thread(target=self.connectthread)
+        t.daemon = True  # Thread is killed when main ends
+        t.start()
+
+    def connectthread(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.s.connect((self.host, self.port))
@@ -62,7 +68,7 @@ class MainApplication(tk.Frame):
             self.addtotext(self.message_area, "[Client] No connection could be made", important=True)
             self.addtotext(self.message_area, "[Debug Info] Host:{}, Port:{}, Name:{}".format(self.host, self.port, self.nick), important=True)
         else:
-            self.parent.title("Client | Connected to {}:{}".format(host, port))
+            self.parent.title("Client | Connected to {}:{}".format(self.host, self.port))
             self.addtotext(self.message_area, "[Client] Connected to server", important=True)
             self.s.send("NICK {}".format(self.nick).encode("utf-8"))
             self.addtotext(self.message_area, "[Client] Name sent", important=True)
@@ -135,7 +141,7 @@ class MainApplication(tk.Frame):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             try:
                 self.parent.destroy()
-            except TclError:
+            except tk.TclError:
                 pass  # Root already destroyed
             self.s.close()  # Close connection
             quit()  # Original login window will destry along with this

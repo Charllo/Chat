@@ -29,5 +29,6 @@
 # Notes
 
  + The server and client are .pyw files. This means that the console window will not open, just the tkinter GUI
+ + UNICODE CHARACTERS ARE NOT SUPPORTED
 
 ---
