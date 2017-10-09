@@ -120,7 +120,7 @@ class MainApplication(tk.Frame):
                         self.addtotext(self.message_area, decoded, important=True)
                         raise ConnectionResetError
 
-                    elif decoded == "[Server Message] Name already is use, please choose another":
+                    elif decoded == "[Server Message] Name already in use, please choose another":
                         self.addtotext(self.message_area, decoded, important=True)
                         raise ConnectionResetError
 
